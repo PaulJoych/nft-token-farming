@@ -1,36 +1,61 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity >=0.8.0;
 
-import {DSTest} from "ds-test/test.sol";
-import {Utilities} from "./utils/Utilities.sol";
-import {console} from "./utils/Console.sol";
-import {Vm} from "forge-std/Vm.sol";
-import {RimbaFarm} from "../RimbaFarm.sol";
+import "@openzeppelin/contracts/mocks/ERC721Mock.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-contract ContractTest is DSTest {
-    Vm internal immutable vm = Vm(HEVM_ADDRESS);
 
-    Utilities internal utils;
+import { DSTest } from "ds-test/test.sol";
+
+import { RimbaFarm } from "../RimbaFarm.sol";
+
+interface CheatCodes {
+    function warp(uint256) external;
+}
+
+contract ContractTest is DSTest, ERC721Holder{
+    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+
+
     RimbaFarm internal rimbaFarm;
-    address payable[] internal users;
+    ERC721Mock internal rimbaNft;
 
     function setUp() public {
-        utils = new Utilities();
-        rimbaFarm = new RimbaFarm();
-        users = utils.createUsers(5);
+        rimbaNft = new ERC721Mock("Rimba NFT", "RMB");
+        rimbaFarm = new RimbaFarm(0x10ED43C718714eb63d5aA57B78B54704E256024E, address(rimbaNft));
+
+        rimbaFarm.setStakingSetting(1, 10);
     }
 
-    function testExample() public {
-        address payable alice = users[0];
-        // labels alice's address in call traces as "Alice [<address>]"
-        vm.label(alice, "Alice");
-        console.log("alice's address", alice);
-        address payable bob = users[1];
-        vm.label(bob, "Bob");
+    function test_rimbapair() public {
+        emit log_address(rimbaFarm.rimbaV2Pair());
+    }
 
-        vm.prank(alice);
-        (bool sent, ) = bob.call{value: 10 ether}("");
-        assertTrue(sent);
-        assertGt(bob.balance, alice.balance);
+    function test_stakeRimba() public {
+        uint64[] memory arr = new uint64[](1);
+        arr[0] = 1;
+
+        rimbaNft.safeMint(address(this), 1);
+        rimbaNft.approve(address(rimbaFarm), 1);
+        rimbaFarm.setRimbaTokenList(arr);
+        rimbaFarm.stakeRimba(1);
+
+        cheats.warp(block.timestamp + 1 days);
+        rimbaFarm.farmMeat(1);
+
+        assertEq(rimbaFarm.balanceOf(address(this)), 10);
+
+        cheats.warp(block.timestamp + 5 days);
+        rimbaFarm.farmMeat(1);
+
+        assertEq(rimbaFarm.balanceOf(address(this)), 60);
+    }
+
+    function test_unstake() public {
+        test_stakeRimba();
+
+        rimbaFarm.unStakeRimba(1);
+        assertEq(rimbaFarm.balanceOf(address(this)), 60);
+        assertEq(rimbaNft.ownerOf(1), address(this));
     }
 }

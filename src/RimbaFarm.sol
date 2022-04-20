@@ -5,12 +5,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import "@pancakeswap/core/contracts/interfaces/IPancakeFactory.sol";
 import "@pancakeswap/periphery/contracts/interfaces/IPancakeRouter02.sol";
 
-contract RimbaFarm is Ownable, ERC20 {
+contract RimbaFarm is Ownable, ERC20, ERC721Holder {
     error NotRimbaToken();
     error NotTokenOwner();
     error NotEligibleToClaimReward();
@@ -77,7 +76,7 @@ contract RimbaFarm is Ownable, ERC20 {
         RimbaStakedList[tokenId_].stakedTimeStamp = block.timestamp;
         RimbaStakedList[tokenId_].lastClaim = block.timestamp;
 
-        sangRimbaNFT.approve(address(this), tokenId_);
+        // sangRimbaNFT.approve(address(this), tokenId_);
         sangRimbaNFT.safeTransferFrom(msg.sender, address(this), tokenId_);
     }
 
@@ -92,7 +91,7 @@ contract RimbaFarm is Ownable, ERC20 {
         uint256 meatReward = callculateMeat(data.lastClaim);
         _mint(msg.sender, meatReward);
 
-        sangRimbaNFT.approve(msg.sender, tokenId_);
+        // sangRimbaNFT.approve(msg.sender, tokenId_);
         sangRimbaNFT.safeTransferFrom(address(this), msg.sender, tokenId_);
     }
 
@@ -125,6 +124,6 @@ contract RimbaFarm is Ownable, ERC20 {
         view
         returns (bool)
     {
-        return (block.timestamp - lastClaim_) > (stakingPeriod * 1 days);
+        return (block.timestamp - lastClaim_) >= (stakingPeriod * 1 days);
     }
 }
