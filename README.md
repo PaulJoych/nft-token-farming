@@ -1,1 +1,1 @@
-# nft-token-farming
+# nft-staking
