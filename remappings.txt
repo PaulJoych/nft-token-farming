@@ -1,0 +1,6 @@
+ds-test/=lib/ds-test/src/
+solmate/=lib/solmate/src/
+forge-std/=lib/forge-std/src/
+@openzeppelin/=lib/openzeppelin-contracts/
+@pancakeswap/periphery/=lib/pancake-swap-periphery/
+@pancakeswap/core/=lib/pancake-swap-core/
